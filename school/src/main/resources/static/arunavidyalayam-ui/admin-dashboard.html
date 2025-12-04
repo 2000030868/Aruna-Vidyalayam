@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Arunavidyalayam</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f8fc;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(to right, #007bff, #00bfff);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        /* School name (left side) */
+        .school-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: white;
+        }
+        .school-name span {
+            color: #FFD700; /* golden highlight */
+        }
+
+        /* Welcome message (center) */
+        .welcome-text {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        /* Logout button (right side) */
+        .logout-btn {
+            background: white;
+            color: #007bff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #f0f0f0;
+        }
+
+        /* Main section */
+        main {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        main h2 {
+            color: #003366;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        /* Dashboard cards */
+        .cards {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 250px;
+            padding: 30px;
+            font-weight: 500;
+            color: #003366;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div class="school-name"><span>ARUNA</span>VIDYALAYAM</div>
+    <div class="welcome-text">Welcome, Admin 👋</div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<main>
+    <h2>Dashboard Overview</h2>
+    <div class="cards">
+        <div class="card" onclick="window.location.href='manage-students.html'">Manage Students</div>
+        <div class="card" onclick="window.location.href='manage-teachers.html'">
+            View Teachers
+        </div>
+        <div class="card" onclick="window.location.href='manage-classrooms.html'">Classroom Details</div>
+        <div class="card">Admissions</div>
+    </div>
+</main>
+
+<script>
+    function logout() {
+        window.location.href = "admin-login.html";
+    }
+</script>
+</body>
+</html>
