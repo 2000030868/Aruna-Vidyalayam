@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Student</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h2>Register Student</h2>
+
+    <form id="registerForm">
+        <label for="name">Student Name:</label>
+        <input type="text" id="name" name="name" placeholder="Enter student name" required>
+
+        <label for="rollNumber">Roll Number:</label>
+        <input type="text" id="rollNumber" name="rollNumber" placeholder="Enter roll number" required>
+
+        <label for="classroomId">Classroom ID:</label>
+        <input type="number" id="classroomId" name="classroomId" placeholder="Enter classroom ID" required>
+
+
+
+        <button type="submit">Register</button>
+    </form>
+
+    <p id="message"></p>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

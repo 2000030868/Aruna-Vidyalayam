@@ -1,0 +1,559 @@
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="utf-8" />-->
+<!--    <meta name="viewport" content="width=device-width,initial-scale=1" />-->
+<!--    <title>Teacher Dashboard - Arunavidyalayam</title>-->
+<!--    <style>-->
+<!--        body{font-family: Poppins, sans-serif;background:#f6f9ff;margin:0;color:#122;}-->
+<!--        header{background:linear-gradient(90deg,#007bff,#00bfff);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}-->
+<!--        header h1{font-size:1.1rem;margin:0}-->
+<!--        .container{max-width:1100px;margin:28px auto;padding:18px;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(1,30,70,0.06)}-->
+<!--        .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}-->
+<!--        select,input[type=date]{padding:10px;border-radius:6px;border:1px solid #d0d8e6}-->
+<!--        button{background:#007bff;color:#fff;padding:10px 14px;border-radius:6px;border:0;cursor:pointer}-->
+<!--        button.secondary{background:#6c757d}-->
+<!--        table{width:100%;border-collapse:collapse;margin-top:18px}-->
+<!--        th,td{padding:8px;border:1px solid #e6eefc;text-align:left}-->
+<!--        th{background:#f0f7ff}-->
+<!--        .center{display:flex;align-items:center;gap:10px}-->
+<!--        .full-width{width:100%}-->
+<!--        .small{font-size:0.9rem;color:#556}-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--<header>-->
+<!--    <h1>Arunavidyalayam — Teacher Dashboard</h1>-->
+<!--    <div>-->
+<!--        <button id="logoutBtn" class="secondary">Logout</button>-->
+<!--    </div>-->
+<!--</header>-->
+
+<!--<div class="container">-->
+<!--    <div class="row" style="justify-content:space-between">-->
+<!--        <div class="center">-->
+<!--            <label class="small">Select Class</label>-->
+<!--            <select id="classSelect">-->
+<!--                <option value="">Loading classes...</option>-->
+<!--            </select>-->
+<!--        </div>-->
+
+<!--        <div class="center">-->
+<!--            <label class="small">Date</label>-->
+<!--            <input type="date" id="attDate" value="">-->
+<!--        </div>-->
+
+<!--        <div>-->
+<!--            <button id="loadStudentsBtn">Load Students</button>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div id="studentsSection" style="margin-top:18px;display:none">-->
+<!--        <div class="row" style="justify-content:space-between">-->
+<!--            <div><strong>Students</strong></div>-->
+<!--            <div>-->
+<!--                <button id="selectAllBtn">Select All Present</button>-->
+<!--                <button id="clearAllBtn" class="secondary">Clear</button>-->
+<!--                <button id="submitAttendanceBtn">Submit Attendance</button>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <table id="studentsTable">-->
+<!--            <thead>-->
+<!--            <tr><th>ID</th><th>Name</th><th>Roll</th><th>Present</th><th>Remarks</th></tr>-->
+<!--            </thead>-->
+<!--            <tbody></tbody>-->
+<!--        </table>-->
+<!--    </div>-->
+
+<!--    <div id="message" style="margin-top:14px;color:green"></div>-->
+<!--</div>-->
+
+<!--<script>-->
+<!--    const API_BASE = "http://localhost:8080";-->
+<!--    const CLASS_API = API_BASE + "/api/classrooms";-->
+<!--    const STUDENTS_BY_CLASS = (id) => `${CLASS_API}/${id}/students`;-->
+<!--    const ATT_BULK = API_BASE + "/api/attendances/bulk";-->
+
+<!--    const classSelect = document.getElementById('classSelect');-->
+<!--    const loadStudentsBtn = document.getElementById('loadStudentsBtn');-->
+<!--    const studentsSection = document.getElementById('studentsSection');-->
+<!--    const studentsTableBody = document.querySelector('#studentsTable tbody');-->
+<!--    const attDateInput = document.getElementById('attDate');-->
+<!--    const selectAllBtn = document.getElementById('selectAllBtn');-->
+<!--    const clearAllBtn = document.getElementById('clearAllBtn');-->
+<!--    const submitAttendanceBtn = document.getElementById('submitAttendanceBtn');-->
+<!--    const messageDiv = document.getElementById('message');-->
+
+<!--    // set default date to today-->
+<!--    attDateInput.value = new Date().toISOString().slice(0,10);-->
+
+<!--    // load classes into dropdown-->
+<!--    async function loadClasses(){-->
+<!--      try {-->
+<!--        const r = await fetch(CLASS_API);-->
+<!--        if(!r.ok) throw new Error("Failed to load classes");-->
+<!--        const classes = await r.json();-->
+<!--        classSelect.innerHTML = `<option value="">&#45;&#45; Select class &#45;&#45;</option>`;-->
+<!--        classes.forEach(c => {-->
+<!--          const label = c.name + (c.section ? " - " + c.section : "");-->
+<!--          classSelect.innerHTML += `<option value="${c.id}">${label}</option>`-->
+<!--        });-->
+<!--      } catch (err){-->
+<!--        classSelect.innerHTML = `<option value="">Failed to load</option>`;-->
+<!--        console.error(err);-->
+<!--      }-->
+<!--    }-->
+
+<!--    async function loadStudentsForClass(){-->
+<!--      const classId = classSelect.value;-->
+<!--      if(!classId) { alert("Choose a class"); return; }-->
+<!--      try {-->
+<!--        const r = await fetch(STUDENTS_BY_CLASS(classId));-->
+<!--        if(!r.ok) throw new Error("Failed to load students");-->
+<!--        const students = await r.json();-->
+<!--        studentsTableBody.innerHTML = '';-->
+<!--        students.forEach(s => {-->
+<!--          const row = document.createElement('tr');-->
+<!--          row.innerHTML = `-->
+<!--            <td>${s.id}</td>-->
+<!--            <td>${s.name || ''}</td>-->
+<!--            <td>${s.rollNumber || ''}</td>-->
+<!--            <td style="text-align:center">-->
+<!--              <input type="checkbox" class="presentCheckbox" data-id="${s.id}" checked>-->
+<!--            </td>-->
+<!--            <td><input type="text" class="remarksInput" data-id="${s.id}" placeholder="remarks"></td>-->
+<!--          `;-->
+<!--          studentsTableBody.appendChild(row);-->
+<!--        });-->
+<!--        studentsSection.style.display = students.length ? 'block' : 'none';-->
+<!--        messageDiv.textContent = '';-->
+<!--      } catch (err){-->
+<!--        console.error(err);-->
+<!--        alert("Failed to load students. Check console.");-->
+<!--      }-->
+<!--    }-->
+
+<!--    selectAllBtn.addEventListener('click', () => {-->
+<!--      document.querySelectorAll('.presentCheckbox').forEach(cb => cb.checked = true);-->
+<!--    });-->
+<!--    clearAllBtn.addEventListener('click', () => {-->
+<!--      document.querySelectorAll('.presentCheckbox').forEach(cb => cb.checked = false);-->
+<!--      document.querySelectorAll('.remarksInput').forEach(i => i.value = '');-->
+<!--    });-->
+
+<!--    submitAttendanceBtn.addEventListener('click', async () => {-->
+<!--      const classId = classSelect.value;-->
+<!--      if(!classId) { alert("choose class"); return; }-->
+<!--      const dateVal = attDateInput.value;-->
+<!--      if(!dateVal) { alert("choose date"); return; }-->
+
+<!--      const rows = Array.from(document.querySelectorAll('#studentsTable tbody tr'));-->
+<!--      if(rows.length === 0) { alert("No students loaded"); return; }-->
+
+<!--      // build DTOs-->
+<!--      const bulk = rows.map(tr => {-->
+<!--        const id = tr.querySelector('.presentCheckbox').dataset.id;-->
+<!--        const present = tr.querySelector('.presentCheckbox').checked;-->
+<!--        const remarks = tr.querySelector('.remarksInput').value || '';-->
+<!--        return {-->
+<!--          studentId: parseInt(id),-->
+<!--          classroomId: parseInt(classId),-->
+<!--          date: dateVal,-->
+<!--          present: present,-->
+<!--          remarks: remarks-->
+<!--        };-->
+<!--      });-->
+
+<!--      try {-->
+<!--        const res = await fetch(ATT_BULK, {-->
+<!--          method: 'POST',-->
+<!--          headers: { 'Content-Type': 'application/json' },-->
+<!--          body: JSON.stringify(bulk)-->
+<!--        });-->
+<!--      if (!res.ok) {-->
+<!--  // prefer json message, fallback to text-->
+<!--  let errText = '';-->
+<!--  try {-->
+<!--    const json = await res.json().catch(()=>null);-->
+<!--    if (json && (json.message || json.error)) {-->
+<!--      errText = json.message || json.error;-->
+<!--    } else if (json) {-->
+<!--      errText = JSON.stringify(json);-->
+<!--    } else {-->
+<!--      errText = await res.text();-->
+<!--    }-->
+<!--  } catch (e) {-->
+<!--    errText = 'Unknown server error';-->
+<!--  }-->
+<!--  console.error('Submit failed: status=' + res.status, errText);-->
+<!--  alert('Submission failed: ' + (errText || ('status ' + res.status)));-->
+<!--  return;-->
+<!--}-->
+
+<!--        const saved = await res.json();-->
+<!--        messageDiv.style.color = 'green';-->
+<!--        messageDiv.textContent = `Saved ${saved.length} attendance records.`;-->
+<!--      } catch (err) {-->
+<!--        console.error(err);-->
+<!--        messageDiv.style.color = 'red';-->
+<!--        messageDiv.textContent = 'Network error while saving attendance.';-->
+<!--      }-->
+<!--    });-->
+
+<!--    loadStudentsBtn.addEventListener('click', loadStudentsForClass);-->
+
+<!--    // initialize-->
+<!--    loadClasses();-->
+<!--</script>-->
+<!--</body>-->
+<!--</html>-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Teacher Dashboard - Arunavidyalayam</title>
+    <style>
+        body{font-family: Poppins, sans-serif;background:#f6f9ff;margin:0;color:#122;}
+        header{background:linear-gradient(90deg,#007bff,#00bfff);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between}
+        header h1{font-size:1.1rem;margin:0}
+        .container{max-width:1100px;margin:28px auto;padding:18px;background:#fff;border-radius:10px;box-shadow:0 6px 24px rgba(1,30,70,0.06)}
+        .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+        select,input[type=date]{padding:10px;border-radius:6px;border:1px solid #d0d8e6}
+        button{background:#007bff;color:#fff;padding:10px 14px;border-radius:6px;border:0;cursor:pointer}
+        button.secondary{background:#6c757d}
+        table{width:100%;border-collapse:collapse;margin-top:18px}
+        th,td{padding:8px;border:1px solid #e6eefc;text-align:left}
+        th{background:#f0f7ff}
+        .center{display:flex;align-items:center;gap:10px}
+        .full-width{width:100%}
+        .small{font-size:0.9rem;color:#556}
+        .muted{color:#666;font-size:0.9rem}
+        .summary { margin-top:10px; font-weight:600 }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Arunavidyalayam — Teacher Dashboard</h1>
+    <div>
+        <button id="logoutBtn" class="secondary">Logout</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="row" style="justify-content:space-between">
+        <div class="center">
+            <label class="small">Select Class</label>
+            <select id="classSelect">
+                <option value="">Loading classes...</option>
+            </select>
+        </div>
+
+        <div class="center">
+            <label class="small">Date</label>
+            <input type="date" id="attDate" value="">
+        </div>
+
+        <div>
+            <button id="loadStudentsBtn">Load Students</button>
+        </div>
+    </div>
+
+    <div id="studentsSection" style="margin-top:18px;display:none">
+        <div class="row" style="justify-content:space-between">
+            <div><strong>Students</strong></div>
+            <div>
+                <button id="selectAllBtn">Select All Present</button>
+                <button id="clearAllBtn" class="secondary">Clear</button>
+                <button id="submitAttendanceBtn">Submit Attendance</button>
+            </div>
+        </div>
+
+        <table id="studentsTable">
+            <thead>
+            <tr><th>ID</th><th>Name</th><th>Roll</th><th>Present</th><th>Remarks</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <div id="message" style="margin-top:14px;color:green"></div>
+
+    <!-- ---------- View Past Attendance UI ---------- -->
+    <div style="margin-top:28px; border-top:1px dashed #e6eefc; padding-top:18px;">
+        <div class="row" style="justify-content:space-between; align-items:center;">
+            <div class="center">
+                <label class="small">View Date</label>
+                <input type="date" id="viewDate" value="">
+                <button id="viewAttendanceBtn">Load Attendance for Date</button>
+            </div>
+
+            <div class="center">
+                <label class="small">Or range:</label>
+                <input type="date" id="fromDate"> to <input type="date" id="toDate">
+                <button id="viewRangeBtn">Load Range</button>
+            </div>
+        </div>
+
+        <div id="pastAttendance" style="margin-top:16px; display:none;">
+            <h3>Attendance for <span id="attendanceLabel"></span></h3>
+            <div id="attendanceSummary" class="summary"></div>
+            <table id="attendanceTable" style="width:100%; border-collapse:collapse;">
+                <thead>
+                <tr><th>ID</th><th>Name</th><th>Roll</th><th>Present</th><th>Remarks</th><th>Date</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <!-- ---------- End View Past Attendance UI ---------- -->
+
+</div>
+
+<script>
+    const API_BASE = "http://localhost:8080";
+    const CLASS_API = API_BASE + "/api/classrooms";
+    const STUDENTS_BY_CLASS = (id) => `${CLASS_API}/${id}/students`;
+    const ATT_BULK = API_BASE + "/api/attendances/bulk";
+    const ATT_CLASS_DATE = (classId, date) => `${API_BASE}/api/attendances/class/${classId}?date=${date}`;
+    const ATT_CLASS_RANGE = (classId, from, to) => `${API_BASE}/api/attendances/class/${classId}/range?from=${from}&to=${to}`;
+
+    const classSelect = document.getElementById('classSelect');
+    const loadStudentsBtn = document.getElementById('loadStudentsBtn');
+    const studentsSection = document.getElementById('studentsSection');
+    const studentsTableBody = document.querySelector('#studentsTable tbody');
+    const attDateInput = document.getElementById('attDate');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const submitAttendanceBtn = document.getElementById('submitAttendanceBtn');
+    const messageDiv = document.getElementById('message');
+
+    // View attendance elements
+    const viewDateInput = document.getElementById('viewDate');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+    const viewAttendanceBtn = document.getElementById('viewAttendanceBtn');
+    const viewRangeBtn = document.getElementById('viewRangeBtn');
+    const pastAttendanceDiv = document.getElementById('pastAttendance');
+    const attendanceTableBody = document.querySelector('#attendanceTable tbody');
+    const attendanceLabel = document.getElementById('attendanceLabel');
+    const attendanceSummary = document.getElementById('attendanceSummary');
+
+    // set default date to today
+    attDateInput.value = new Date().toISOString().slice(0,10);
+    viewDateInput.value = new Date().toISOString().slice(0,10);
+
+    // load classes into dropdown
+    async function loadClasses(){
+      try {
+        const r = await fetch(CLASS_API);
+        if(!r.ok) throw new Error("Failed to load classes");
+        const classes = await r.json();
+        classSelect.innerHTML = `<option value="">-- Select class --</option>`;
+        classes.forEach(c => {
+          const label = c.name + (c.section ? " - " + c.section : "");
+          classSelect.innerHTML += `<option value="${c.id}">${label}</option>`
+        });
+      } catch (err){
+        classSelect.innerHTML = `<option value="">Failed to load</option>`;
+        console.error(err);
+      }
+    }
+
+    async function loadStudentsForClass(){
+      const classId = classSelect.value;
+      if(!classId) { alert("Choose a class"); return; }
+      try {
+        const r = await fetch(STUDENTS_BY_CLASS(classId));
+        if(!r.ok) throw new Error("Failed to load students");
+        const students = await r.json();
+        studentsTableBody.innerHTML = '';
+        students.forEach(s => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${s.id}</td>
+            <td>${escapeHtml(s.name || '')}</td>
+            <td>${escapeHtml(s.rollNumber || '')}</td>
+            <td style="text-align:center">
+              <input type="checkbox" class="presentCheckbox" data-id="${s.id}" checked>
+            </td>
+            <td><input type="text" class="remarksInput" data-id="${s.id}" placeholder="remarks"></td>
+          `;
+          studentsTableBody.appendChild(row);
+        });
+        studentsSection.style.display = students.length ? 'block' : 'none';
+        messageDiv.textContent = '';
+      } catch (err){
+        console.error(err);
+        alert("Failed to load students. Check console.");
+      }
+    }
+
+    selectAllBtn.addEventListener('click', () => {
+      document.querySelectorAll('.presentCheckbox').forEach(cb => cb.checked = true);
+    });
+    clearAllBtn.addEventListener('click', () => {
+      document.querySelectorAll('.presentCheckbox').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.remarksInput').forEach(i => i.value = '');
+    });
+
+    submitAttendanceBtn.addEventListener('click', async () => {
+      const classId = classSelect.value;
+      if(!classId) { alert("choose class"); return; }
+      const dateVal = attDateInput.value;
+      if(!dateVal) { alert("choose date"); return; }
+
+      const rows = Array.from(document.querySelectorAll('#studentsTable tbody tr'));
+      if(rows.length === 0) { alert("No students loaded"); return; }
+
+      // build DTOs
+      const bulk = rows.map(tr => {
+        const id = tr.querySelector('.presentCheckbox').dataset.id;
+        const present = tr.querySelector('.presentCheckbox').checked;
+        const remarks = tr.querySelector('.remarksInput').value || '';
+        return {
+          studentId: parseInt(id),
+          classroomId: parseInt(classId),
+          date: dateVal,
+          present: present,
+          remarks: remarks
+        };
+      });
+
+      try {
+        const res = await fetch(ATT_BULK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bulk)
+        });
+        if (!res.ok) {
+          // prefer json message, fallback to text
+          let errText = '';
+          try {
+            const json = await res.json().catch(()=>null);
+            if (json && (json.message || json.error)) {
+              errText = json.message || json.error;
+            } else if (json) {
+              errText = JSON.stringify(json);
+            } else {
+              errText = await res.text();
+            }
+          } catch (e) {
+            errText = 'Unknown server error';
+          }
+          console.error('Submit failed: status=' + res.status, errText);
+          alert('Submission failed: ' + (errText || ('status ' + res.status)));
+          return;
+        }
+
+        const saved = await res.json();
+        messageDiv.style.color = 'green';
+        messageDiv.textContent = `Saved ${saved.length} attendance records.`;
+      } catch (err) {
+        console.error(err);
+        messageDiv.style.color = 'red';
+        messageDiv.textContent = 'Network error while saving attendance.';
+      }
+    });
+
+    // ---------- View attendance functions ----------
+    async function loadAttendanceForDate() {
+      const classId = classSelect.value;
+      if (!classId) { alert('Choose class first'); return; }
+      const date = viewDateInput.value;
+      if (!date) { alert('Choose date'); return; }
+
+      try {
+        const url = ATT_CLASS_DATE(classId, date);
+        const r = await fetch(url);
+        if (!r.ok) {
+          const err = await r.json().catch(()=>({message: r.statusText})) ;
+          throw new Error(err.message || 'Failed to load attendance');
+        }
+        const list = await r.json();
+        renderAttendanceList(list, date);
+      } catch(err) {
+        console.error('Load attendance failed', err);
+        alert('Failed to load attendance: ' + (err.message || err));
+      }
+    }
+
+    async function loadAttendanceRange() {
+      const classId = classSelect.value;
+      if (!classId) { alert('Choose class first'); return; }
+      const from = fromDateInput.value;
+      const to = toDateInput.value;
+      if (!from || !to) { alert('Choose both from and to dates'); return; }
+
+      try {
+        const url = ATT_CLASS_RANGE(classId, from, to);
+        const r = await fetch(url);
+        if (!r.ok) {
+          const err = await r.json().catch(()=>({message:r.statusText}));
+          throw new Error(err.message || 'Failed to load range');
+        }
+        const list = await r.json();
+        renderAttendanceList(list, `${from} → ${to}`);
+      } catch(err) {
+        console.error('Load attendance range failed', err);
+        alert('Failed to load attendance range: ' + (err.message || err));
+      }
+    }
+
+    function renderAttendanceList(attList, labelDate) {
+      attendanceTableBody.innerHTML = '';
+      if (!attList || attList.length === 0) {
+        attendanceLabel.textContent = labelDate;
+        attendanceSummary.textContent = 'No attendance records found.';
+        pastAttendanceDiv.style.display = 'block';
+        return;
+      }
+
+      let presentCount = 0, absentCount = 0;
+
+      // If single date, it's typical to have one record per student.
+      // For range, there may be multiple rows per student; we will render all rows.
+      attList.forEach(a => {
+        const tr = document.createElement('tr');
+
+        // Attendance JSON may include nested student object (recommended).
+        // Support both shapes: a.student.{id,name,rollNumber} or a.studentId / a.studentName
+        const sid = a.student ? (a.student.id ?? '') : (a.studentId ?? '');
+        const sname = a.student ? (a.student.name ?? '') : (a.studentName ?? '');
+        const sroll = a.student ? (a.student.rollNumber ?? '') : (a.rollNumber ?? '');
+        const present = a.present === true;
+        const remarks = a.remarks || '';
+        const date = a.date || '';
+
+        if (present) presentCount++; else absentCount++;
+
+        tr.innerHTML = `<td>${sid}</td><td>${escapeHtml(sname)}</td><td>${escapeHtml(sroll)}</td>
+                        <td style="text-align:center">${present ? '✔' : '✘'}</td>
+                        <td>${escapeHtml(remarks)}</td>
+                        <td>${date}</td>`;
+        attendanceTableBody.appendChild(tr);
+      });
+
+      attendanceLabel.textContent = labelDate;
+      attendanceSummary.textContent = `Present: ${presentCount} | Absent: ${absentCount} | Total records: ${attList.length}`;
+      pastAttendanceDiv.style.display = 'block';
+    }
+
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    }
+
+    // hook buttons
+    viewAttendanceBtn.addEventListener('click', loadAttendanceForDate);
+    viewRangeBtn.addEventListener('click', loadAttendanceRange);
+    loadStudentsBtn.addEventListener('click', loadStudentsForClass);
+
+    // initialize
+    loadClasses();
+</script>
+</body>
+</html>
